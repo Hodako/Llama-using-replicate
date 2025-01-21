@@ -2,7 +2,7 @@ import logging
 import requests
 import replicate
 from telegram import Update
-from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
+from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, CallbackContext
 
 # Enable logging
 logging.basicConfig(
@@ -53,6 +53,13 @@ async def get_llama_response(message: str) -> str:
 
     return response_text
 
+async def error_handler(update: Update, context: CallbackContext) -> None:
+    """Log the error and send a message to notify the user."""
+    logger.error(msg="Exception while handling an update:", exc_info=context.error)
+    
+    # Notify the user about the error
+    await update.message.reply_text('An unexpected error occurred. Please try again later.')
+
 def main() -> None:
     """Start the bot."""
     # Create the Application and pass it your bot's token
@@ -62,6 +69,9 @@ def main() -> None:
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, chat))
+
+    # Add the error handler
+    application.add_error_handler(error_handler)
 
     # Run the bot until you press Ctrl-C or the process receives SIGINT,
     # SIGTERM or SIGABRT

@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 # Tokens
 TELEGRAM_BOT_TOKEN = '7347802263:AAFD4mZemj6X08xKHF4Rt0-n9ZXNtd-89Bc'
-REPLICATE_API_TOKEN = 'r8_9HMoezEGuZpZI6LwdMqxB7HC8qHpQou1sULy9'
+REPLICATE_API_TOKEN = 'r8_TXfKcfE1yZ49ZQa5TQDIdJmuE3x2MmG3qPWrX'
 LLAMA_MODEL_VERSION = 'meta/meta-llama-3-8b-instruct'  # Replace with your actual LLaMA model version ID
 
 # Set the Replicate API token

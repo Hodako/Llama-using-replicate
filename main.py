@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 # Tokens
 TELEGRAM_BOT_TOKEN = '7347802263:AAFD4mZemj6X08xKHF4Rt0-n9ZXNtd-89Bc'
-REPLICATE_API_TOKEN = 'r8_TXfKcfE1yZ49ZQa5TQDIdJmuE3x2MmG3qPWrX'
+REPLICATE_API_TOKEN = 'r8_1uK8tOV2uhXafjb3cMLryj5Ubyi41YF1J8V6K'
 LLAMA_MODEL_VERSION = 'meta/meta-llama-3-8b-instruct'  # Replace with your actual LLaMA model version ID
 
 # Set the Replicate API token
@@ -73,9 +73,13 @@ def main() -> None:
     # Add the error handler
     application.add_error_handler(error_handler)
 
-    # Run the bot until you press Ctrl-C or the process receives SIGINT,
-    # SIGTERM or SIGABRT
-    application.run_polling()
+    # Set up webhook
+    WEBHOOK_URL = f"https://llama-using-replicate.onrender.com/{TELEGRAM_BOT_TOKEN}"
+    application.run_webhook(
+        listen="0.0.0.0",
+        port=8443,
+        webhook_url=WEBHOOK_URL
+    )
 
 if __name__ == '__main__':
     main()

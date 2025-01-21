@@ -1,5 +1,4 @@
 import logging
-import requests
 import replicate
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, CallbackContext
@@ -14,22 +13,32 @@ logger = logging.getLogger(__name__)
 
 # Tokens
 TELEGRAM_BOT_TOKEN = '7347802263:AAFD4mZemj6X08xKHF4Rt0-n9ZXNtd-89Bc'
-REPLICATE_API_TOKEN = 'r8_d2ch8W3lkOZjZFYt0ECt8xxVXXJXzQ82YSYZQ'
 LLAMA_MODEL_VERSION = 'meta/meta-llama-3-8b-instruct'  # Replace with your actual LLaMA model version ID
 
-# Set the Replicate API token
-replicate.Client(api_token=REPLICATE_API_TOKEN)
+# Global variable to store the Replicate API token
+replicate_api_token = None
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message when the command /start is issued."""
-    await update.message.reply_text('Hi! I am your LLaMA AI chat bot. How can I help you today?')
+    await update.message.reply_text('Hi! Please provide your Replicate API token using /set_token command.')
+
+async def set_token(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Set the Replicate API token."""
+    global replicate_api_token
+    replicate_api_token = context.args[0]
+    replicate.Client(api_token=replicate_api_token)
+    await update.message.reply_text('Replicate API token set successfully!')
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message when the command /help is issued."""
-    await update.message.reply_text('You can chat with me by sending any message.')
+    await update.message.reply_text('You can chat with me by sending any message after setting the Replicate API token using /set_token command.')
 
 async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Echo the user message and get a response from LLaMA."""
+    """Get a response from LLaMA."""
+    if not replicate_api_token:
+        await update.message.reply_text('Please set your Replicate API token using /set_token command.')
+        return
+    
     user_message = update.message.text
     llama_response = await get_llama_response(user_message)
     await update.message.reply_text(llama_response)
@@ -68,6 +77,7 @@ async def main() -> None:
 
     # Add handlers
     application.add_handler(CommandHandler("start", start))
+    application.add_handler(CommandHandler("set_token", set_token, pass_args=True))
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, chat))
 

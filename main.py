@@ -25,9 +25,12 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 async def set_token(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Set the Replicate API token."""
     global replicate_api_token
-    replicate_api_token = context.args[0]
-    replicate.Client(api_token=replicate_api_token)
-    await update.message.reply_text('Replicate API token set successfully!')
+    if context.args:
+        replicate_api_token = context.args[0]
+        replicate.Client(api_token=replicate_api_token)
+        await update.message.reply_text('Replicate API token set successfully!')
+    else:
+        await update.message.reply_text('Please provide a valid Replicate API token.')
 
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Send a message when the command /help is issued."""
@@ -77,7 +80,7 @@ async def main() -> None:
 
     # Add handlers
     application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("set_token", set_token, pass_args=True))
+    application.add_handler(CommandHandler("set_token", set_token))
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, chat))
 

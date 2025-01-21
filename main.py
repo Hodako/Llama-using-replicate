@@ -1,6 +1,6 @@
 import logging
 import replicate
-from telegram import Update
+from telegram import Update, TelegramError
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes, CallbackContext
 import asyncio
 
@@ -13,31 +13,35 @@ logger = logging.getLogger(__name__)
 
 # Tokens
 TELEGRAM_BOT_TOKEN = '7347802263:AAFD4mZemj6X08xKHF4Rt0-n9ZXNtd-89Bc'
-LLAMA_MODEL_VERSION = 'meta/meta-llama-3-8b-instruct'  # Replace with your actual LLaMA model version ID
+LLAMA_MODEL_VERSION = 'meta/meta-llama-3-8b-instruct' 
 
 # Global variable to store the Replicate API token
 replicate_api_token = None
 
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Send a message when the command /start is issued."""
     await update.message.reply_text('Hi! Please provide your Replicate API token using /set_token command.')
 
+
 async def set_token(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Set the Replicate API token."""
     global replicate_api_token
     if context.args:
         replicate_api_token = context.args[0]
-        replicate.Client(api_token=replicate_api_token)
-        await update.message.reply_text('Replicate API token set successfully!')
+        try:
+            replicate.Client(api_token=replicate_api_token)
+            await update.message.reply_text('Replicate API token set successfully!')
+        except Exception as e:
+            logger.error('Error with Replicate API token: %s', str(e))
+            await update.message.reply_text('Invalid Replicate API token. Please try again.')
     else:
         await update.message.reply_text('Please provide a valid Replicate API token.')
 
+
 async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Send a message when the command /help is issued."""
     await update.message.reply_text('You can chat with me by sending any message after setting the Replicate API token using /set_token command.')
 
+
 async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Get a response from LLaMA."""
     if not replicate_api_token:
         await update.message.reply_text('Please set your Replicate API token using /set_token command.')
         return
@@ -45,6 +49,7 @@ async def chat(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_message = update.message.text
     llama_response = await get_llama_response(user_message)
     await update.message.reply_text(llama_response)
+
 
 async def get_llama_response(message: str) -> str:
     input = {
@@ -66,15 +71,16 @@ async def get_llama_response(message: str) -> str:
 
     return response_text
 
+
 async def error_handler(update: Update, context: CallbackContext) -> None:
-    """Log the error and send a message to notify the user."""
     logger.error(msg="Exception while handling an update:", exc_info=context.error)
-    
-    # Notify the user about the error
-    await update.message.reply_text('An unexpected error occurred. Please try again later.')
+    if isinstance(context.error, TelegramError):
+        await update.message.reply_text('An unexpected error occurred. Please try again later.')
+    else:
+        logger.error('Unhandled error type: %s', type(context.error))
+
 
 async def main() -> None:
-    """Start the bot."""
     # Create the Application and pass it your bot's token
     application = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
 
